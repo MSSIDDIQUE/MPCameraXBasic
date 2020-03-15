@@ -37,15 +37,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.MimeTypeMap
 import android.widget.ImageButton
-import androidx.camera.core.AspectRatio
-import androidx.camera.core.Camera
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCapture.Metadata
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
+import android.widget.SeekBar
+import androidx.camera.core.*
+import androidx.camera.core.ImageCapture.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -66,6 +60,8 @@ import com.android.example.cameraxbasic.utils.ANIMATION_SLOW_MILLIS
 import com.android.example.cameraxbasic.utils.simulateClick
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
+import kotlinx.android.synthetic.main.camera_ui_container.*
+import kotlinx.android.synthetic.main.pics_list_item.view.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.kodein.di.KodeinAware
@@ -120,11 +116,7 @@ class CameraFragment : Fragment() {
         }
     }
 
-    /**
-     * We need a display listener for orientation changes that do not trigger a configuration
-     * change, for example if we choose to override config change in manifest or for 180-degree
-     * orientation changes.
-     */
+
     private val displayListener = object : DisplayManager.DisplayListener {
         override fun onDisplayAdded(displayId: Int) = Unit
         override fun onDisplayRemoved(displayId: Int) = Unit
@@ -218,20 +210,12 @@ class CameraFragment : Fragment() {
         }
     }
 
-    /**
-     * Inflate camera controls and update the UI manually upon config changes to avoid removing
-     * and re-adding the view finder from the view hierarchy; this provides a seamless rotation
-     * transition on devices that support it.
-     *
-     * NOTE: The flag is supported starting in Android 8 but there still is a small flash on the
-     * screen for devices that run Android 9 or below.
-     */
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         updateCameraUi()
     }
 
-    /** Declare and bind preview, capture and analysis use cases */
     private fun bindCameraUseCases() {
 
         // Get screen metrics used to setup camera for full screen resolution
@@ -261,6 +245,7 @@ class CameraFragment : Fragment() {
 
             // Attach the viewfinder's surface provider to preview use case
             preview?.setSurfaceProvider(viewFinder.previewSurfaceProvider)
+            preview
 
             // ImageCapture
             imageCapture = ImageCapture.Builder()
@@ -271,6 +256,7 @@ class CameraFragment : Fragment() {
                 // Set initial target rotation, we will have to call this again if rotation changes
                 // during the lifecycle of this use case
                 .setTargetRotation(rotation)
+                    .setFlashMode(FLASH_MODE_ON)
                 .build()
 
             // ImageAnalysis
@@ -306,17 +292,7 @@ class CameraFragment : Fragment() {
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
-    /**
-     *  [androidx.camera.core.ImageAnalysisConfig] requires enum value of
-     *  [androidx.camera.core.AspectRatio]. Currently it has values of 4:3 & 16:9.
-     *
-     *  Detecting the most suitable ratio for dimensions provided in @params by counting absolute
-     *  of preview ratio to one of the provided values.
-     *
-     *  @param width - preview width
-     *  @param height - preview height
-     *  @return suitable aspect ratio
-     */
+
     private fun aspectRatio(width: Int, height: Int): Int {
         val previewRatio = max(width, height).toDouble() / min(width, height)
         if (abs(previewRatio - RATIO_4_3_VALUE) <= abs(previewRatio - RATIO_16_9_VALUE)) {
@@ -327,7 +303,6 @@ class CameraFragment : Fragment() {
 
 
 
-    /** Method used to re-draw the camera UI controls, called every time configuration changes. */
     private fun updateCameraUi() {
 
         // Remove previous UI if any
@@ -443,18 +418,36 @@ class CameraFragment : Fragment() {
             }
         }
 
+        controls.findViewById<ImageButton>(R.id.flash_button).setOnClickListener{
+            val flashMode = imageCapture?.flashMode
+            if(flashMode == FLASH_MODE_ON) {
+                imageCapture?.flashMode = FLASH_MODE_OFF
+                controls.findViewById<ImageButton>(R.id.flash_button).setImageResource(R.drawable.ic_flash_off)
+            }
+            else
+            {
+                imageCapture?.flashMode = FLASH_MODE_ON
+                controls.findViewById<ImageButton>(R.id.flash_button).setImageResource(R.drawable.ic_flash_on)
+            }
+        }
+
+        controls.findViewById<SeekBar>(R.id.zoom_slider).setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val cameraControl = camera?.cameraControl
+                cameraControl?.setLinearZoom(progress / 100.toFloat())
+                //imageCapture.setZoomPercentage(progress / 100.toFloat())
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
         controls.findViewById<ImageButton>(R.id.list_view_button).setOnClickListener{
             it.findNavController().navigate(R.id.action_camera_fragment_to_list_view_fragment)
         }
     }
 
-
-    /**
-     * Our custom image analysis class.
-     *
-     * <p>All we need to do is override the function `analyze` with our desired operations. Here,
-     * we compute the average luminosity of the image by looking at the Y plane of the YUV frame.
-     */
     private class LuminosityAnalyzer(listener: LumaListener? = null) : ImageAnalysis.Analyzer {
         private val frameRateWindow = 8
         private val frameTimestamps = ArrayDeque<Long>(5)
@@ -463,14 +456,10 @@ class CameraFragment : Fragment() {
         var framesPerSecond: Double = -1.0
             private set
 
-        /**
-         * Used to add listeners that will be called with each luma computed
-         */
+
         fun onFrameAnalyzed(listener: LumaListener) = listeners.add(listener)
 
-        /**
-         * Helper extension function used to extract a byte array from an image plane buffer
-         */
+
         private fun ByteBuffer.toByteArray(): ByteArray {
             rewind()    // Rewind the buffer to zero
             val data = ByteArray(remaining())
@@ -478,22 +467,10 @@ class CameraFragment : Fragment() {
             return data // Return the byte array
         }
 
-        /**
-         * Analyzes an image to produce a result.
-         *
-         * <p>The caller is responsible for ensuring this analysis method can be executed quickly
-         * enough to prevent stalls in the image acquisition pipeline. Otherwise, newly available
-         * images will not be acquired and analyzed.
-         *
-         * <p>The image passed to this method becomes invalid after this method returns. The caller
-         * should not store external references to this image, as these references will become
-         * invalid.
-         *
-         * @param image image being analyzed VERY IMPORTANT: Analyzer method implementation must
-         * call image.close() on received images when finished using them. Otherwise, new images
-         * may not be received or the camera may stall, depending on back pressure setting.
-         *
-         */
+        private fun setUpZoomSlider() {
+
+        }
+
         override fun analyze(image: ImageProxy) {
             // If there are no listeners attached, we don't need to perform analysis
             if (listeners.isEmpty()) {

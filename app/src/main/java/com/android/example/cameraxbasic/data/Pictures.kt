@@ -1,8 +1,9 @@
 package com.android.example.cameraxbasic.data
 
 import android.os.Parcelable
+import com.android.example.cameraxbasic.data.Pics
 import kotlinx.android.parcel.Parcelize
 
 @Parcelize
-data class Pics(val imageUrl:String,
-                val name:String) :Parcelable
+class Pictures:ArrayList<Pics>(),Parcelable {
+}

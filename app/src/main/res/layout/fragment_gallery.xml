@@ -9,6 +9,18 @@
     android:background="@android:color/black"
     android:layoutDirection="ltr">
 
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:elevation="20dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/photo_view_pager" />
+
     <androidx.viewpager.widget.ViewPager
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -36,16 +48,16 @@
 
         <ImageButton
             android:id="@+id/share_button"
+            android:layout_width="@dimen/round_button_small"
+            android:layout_height="@dimen/round_button_small"
+            android:layout_marginBottom="@dimen/margin_small"
+            android:background="@android:color/transparent"
             android:contentDescription="@string/share_button_alt"
+            android:scaleType="fitCenter"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toLeftOf="@id/delete_button"
-            android:layout_marginBottom="@dimen/margin_small"
-            android:layout_width="@dimen/round_button_small"
-            android:layout_height="@dimen/round_button_small"
-            android:scaleType="fitCenter"
-            android:background="@android:color/transparent"
-            app:srcCompat="@drawable/ic_share" />
+            app:srcCompat="@drawable/ic_crop" />
 
         <ImageButton
             android:id="@+id/delete_button"

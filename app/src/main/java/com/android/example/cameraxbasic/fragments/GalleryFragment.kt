@@ -1,19 +1,3 @@
-/*
- * Copyright 2019 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.android.example.cameraxbasic.fragments
 
 import android.os.Bundle
@@ -28,6 +12,7 @@ import android.content.Intent
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
+import android.provider.MediaStore
 import android.webkit.MimeTypeMap
 import android.widget.ImageButton
 import android.widget.Toast
@@ -46,6 +31,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.UploadTask
+import kotlinx.android.synthetic.main.fragment_gallery.*
 import java.util.*
 
 val EXTENSION_WHITELIST = arrayOf("JPG")
@@ -120,9 +106,10 @@ class GalleryFragment internal constructor() : Fragment() {
                 // Get URI from our FileProvider implementation
                 val uri = FileProvider.getUriForFile(
                         view.context, BuildConfig.APPLICATION_ID + ".provider", mediaFile)
-                Toast.makeText(context, "The uri is " + uri.toString(), Toast.LENGTH_LONG).show()
+                //Toast.makeText(context, "The uri is " + uri.toString(), Toast.LENGTH_LONG).show()
+                progress_bar.visibility = View.VISIBLE
                 uploadImage(uri);
-
+                progress_bar.visibility = View.GONE
             }
         }
 
@@ -140,14 +127,24 @@ class GalleryFragment internal constructor() : Fragment() {
                     val uri = FileProvider.getUriForFile(
                             view.context, BuildConfig.APPLICATION_ID + ".provider", mediaFile)
                     // Set the appropriate intent extra, type, action and flags
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    type = mediaType
-                    action = Intent.ACTION_SEND
-                    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    //putExtra(Intent.EXTRA_STREAM, uri)
+                    setDataAndType(uri, "image/*");
+                    action = "com.android.camera.action.CROP"
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    putExtra(MediaStore.EXTRA_OUTPUT,uri);
+
+                    putExtra("crop", "true");
+                    //indicate aspect of desired crop
+                    putExtra("aspectX", 4);
+                    putExtra("aspectY", 2.5);
+                    //indicate output X and Y
+                    putExtra("outputX", 450);
+                    putExtra("outputY", 275);
                 }
 
                 // Launch the intent letting the user choose which app to share with
-                startActivity(Intent.createChooser(intent, getString(R.string.share_hint)))
+                startActivityForResult(intent, 1)
             }
         }
 
@@ -186,7 +183,7 @@ class GalleryFragment internal constructor() : Fragment() {
         }
     }
 
-     fun uploadImage(uri: Uri) {
+    fun uploadImage(uri: Uri) {
          var s = uri.toString().split("/")
          var filename = s[s.size-1]
          val ref = storageReference?.child("uploads/" + filename)
@@ -208,7 +205,7 @@ class GalleryFragment internal constructor() : Fragment() {
                  Toast.makeText(context,"Unable to save the image to firebase storage",Toast.LENGTH_LONG).show()
              }
          }?.addOnFailureListener {
-
+             Toast.makeText(context,"Something went wrong please try again later",Toast.LENGTH_LONG).show()
          }
      }
 
