@@ -56,6 +56,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.Navigation
+import androidx.navigation.findNavController
 import com.android.example.cameraxbasic.KEY_EVENT_ACTION
 import com.android.example.cameraxbasic.KEY_EVENT_EXTRA
 import com.android.example.cameraxbasic.MainActivity
@@ -67,6 +68,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.kodein.di.KodeinAware
 import java.io.File
 import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
@@ -81,13 +83,9 @@ import kotlin.math.min
 /** Helper type alias used for analysis use case callbacks */
 typealias LumaListener = (luma: Double) -> Unit
 
-/**
- * Main fragment for this app. Implements all camera operations including:
- * - Viewfinder
- * - Photo taking
- * - Image analysis
- */
+
 class CameraFragment : Fragment() {
+
 
     private lateinit var container: ConstraintLayout
     private lateinit var viewFinder: PreviewView
@@ -443,6 +441,10 @@ class CameraFragment : Fragment() {
                 ).navigate(CameraFragmentDirections
                         .actionCameraToGallery(outputDirectory.absolutePath))
             }
+        }
+
+        controls.findViewById<ImageButton>(R.id.list_view_button).setOnClickListener{
+            it.findNavController().navigate(R.id.action_camera_fragment_to_list_view_fragment)
         }
     }
 

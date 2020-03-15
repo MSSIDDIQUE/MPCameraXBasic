@@ -17,6 +17,7 @@
 <navigation
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/permissions_fragment">
 
@@ -47,6 +48,9 @@
             app:destination="@id/permissions_fragment"
             app:popUpTo="@id/camera_fragment"
             app:popUpToInclusive="true"/>
+        <action
+            android:id="@+id/action_camera_fragment_to_list_view_fragment"
+            app:destination="@id/list_view_fragment" />
 
     </fragment>
 
@@ -57,6 +61,15 @@
         <argument
             android:name="root_directory"
             app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/list_view_fragment"
+        android:name="com.android.example.cameraxbasic.fragments.ListViewFragment"
+        android:label="fragment_list_view"
+        tools:layout="@layout/fragment_list_view" >
+        <action
+            android:id="@+id/action_list_view_fragment_to_camera_fragment"
+            app:destination="@id/camera_fragment" />
     </fragment>
 
 </navigation>

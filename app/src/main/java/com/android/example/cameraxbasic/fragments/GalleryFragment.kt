@@ -26,6 +26,7 @@ import androidx.viewpager.widget.ViewPager
 import java.io.File
 import android.content.Intent
 import android.media.MediaScannerConnection
+import android.net.Uri
 import android.os.Build
 import android.webkit.MimeTypeMap
 import android.widget.ImageButton
@@ -40,19 +41,25 @@ import androidx.navigation.Navigation
 import androidx.navigation.fragment.navArgs
 import com.android.example.cameraxbasic.utils.showImmersive
 import com.android.example.cameraxbasic.R
-import java.util.Locale
+import com.google.android.gms.tasks.Continuation
+import com.google.android.gms.tasks.Task
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.UploadTask
+import java.util.*
 
 val EXTENSION_WHITELIST = arrayOf("JPG")
 
-/** Fragment used to present the user with a gallery of photos taken */
 class GalleryFragment internal constructor() : Fragment() {
 
-    /** AndroidX navigation arguments */
+    val firebaseStore = FirebaseStorage.getInstance()
+    val storageReference = FirebaseStorage.getInstance().reference
+
     private val args: GalleryFragmentArgs by navArgs()
 
     private lateinit var mediaList: MutableList<File>
 
-    /** Adapter class used to present a fragment containing one photo or video as a page */
+
     inner class MediaPagerAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
         override fun getCount(): Int = mediaList.size
         override fun getItem(position: Int): Fragment = PhotoFragment.create(mediaList[position])
@@ -107,13 +114,14 @@ class GalleryFragment internal constructor() : Fragment() {
             Navigation.findNavController(requireActivity(), R.id.fragment_container).navigateUp()
         }
 
-        view.findViewById<ImageButton>(R.id.upload_button).setOnClickListener{
+        view.findViewById<ImageButton>(R.id.upload_button).setOnClickListener {
             mediaList.getOrNull(mediaViewPager.currentItem)?.let { mediaFile ->
 
                 // Get URI from our FileProvider implementation
                 val uri = FileProvider.getUriForFile(
                         view.context, BuildConfig.APPLICATION_ID + ".provider", mediaFile)
-                Toast.makeText(context,"The uri is "+uri.toString(),Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "The uri is " + uri.toString(), Toast.LENGTH_LONG).show()
+                uploadImage(uri);
 
             }
         }
@@ -177,4 +185,48 @@ class GalleryFragment internal constructor() : Fragment() {
             }
         }
     }
+
+     fun uploadImage(uri: Uri) {
+         var s = uri.toString().split("/")
+         var filename = s[s.size-1]
+         val ref = storageReference?.child("uploads/" + filename)
+         val uploadTask = ref?.putFile(uri!!)
+
+         val urlTask = uploadTask?.continueWithTask(Continuation<UploadTask.TaskSnapshot, Task<Uri>> { task ->
+             if (!task.isSuccessful) {
+                 task.exception?.let {
+                     throw it
+                 }
+             }
+             return@Continuation ref.downloadUrl
+         })?.addOnCompleteListener { task ->
+             if (task.isSuccessful) {
+                 Toast.makeText(context,"Image is saved to firebase storage successfully ",Toast.LENGTH_LONG).show()
+                 val downloadUri = task.result
+                 addUploadRecordToDb(downloadUri.toString(),filename)
+             } else {
+                 Toast.makeText(context,"Unable to save the image to firebase storage",Toast.LENGTH_LONG).show()
+             }
+         }?.addOnFailureListener {
+
+         }
+     }
+
+    private fun addUploadRecordToDb(uri: String, name:String){
+        val db = FirebaseFirestore.getInstance()
+
+        val data = HashMap<String, Any>()
+        data["imageUrl"] = uri
+        data["name"] = name
+
+        db.collection("url")
+                .add(data)
+                .addOnSuccessListener { documentReference ->
+                    Toast.makeText(context, "Saved to DB", Toast.LENGTH_LONG).show()
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(context, "Error saving to DB", Toast.LENGTH_LONG).show()
+                }
+    }
 }
+

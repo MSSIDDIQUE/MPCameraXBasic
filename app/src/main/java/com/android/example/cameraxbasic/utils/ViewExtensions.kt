@@ -17,10 +17,9 @@
 package com.android.example.cameraxbasic.utils
 
 import android.os.Build
-import android.view.DisplayCutout
-import android.view.View
-import android.view.WindowManager
+import android.view.*
 import android.widget.ImageButton
+import androidx.annotation.LayoutRes
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 
@@ -87,4 +86,8 @@ fun AlertDialog.showImmersive() {
 
     // Set the dialog to focusable again
     window?.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+}
+
+fun ViewGroup.inflate(@LayoutRes layoutRes: Int, attachToRoot: Boolean = false): View {
+    return LayoutInflater.from(context).inflate(layoutRes, this, attachToRoot)
 }
