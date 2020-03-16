@@ -35,4 +35,4 @@ the application have 4 major veiw
 
 # link to download apk
 
-https://drive.google.com/file/d/1Ky5QGuMGaWfstslRAII0zPFsjb9hwlAu/view?usp=drivesdk
+https://drive.google.com/file/d/1bc_rJdgevVvlyzi85KLjCOX_bR3Tvx9y/view?usp=drivesdk
