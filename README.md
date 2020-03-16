@@ -31,3 +31,8 @@ the application have 4 major veiw
 7. i am using navigation architecture components for navigation in between the fragments
 8. i am using safeargs for passing the arguments in between the fragements
 9. i am using Picasso for loading the images into the imageviews
+
+
+# link to download apk
+
+https://drive.google.com/file/d/1Ky5QGuMGaWfstslRAII0zPFsjb9hwlAu/view?usp=drivesdk
