@@ -5,10 +5,9 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.Navigation
+import androidx.navigation.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.android.example.cameraxbasic.R
 import com.android.example.cameraxbasic.adapters.PicsListAdapter
@@ -43,12 +42,13 @@ class ListViewFragment : Fragment(),KodeinAware {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.findViewById<ImageButton>(R.id.back_button).setOnClickListener {
-            Navigation.findNavController(requireActivity(), R.id.fragment_container).navigateUp()
+        back_button.setOnClickListener {
+            it.findNavController().navigate(R.id.action_list_view_fragment_to_camera_fragment)
         }
         viewModel = ViewModelProvider(this,viewModelFactory).get(PicsViewModel::class.java)
         viewModel.getPics().observe(this@ListViewFragment, Observer {
             pics->
+            progress_bar.visibility = View.GONE
             adapter = PicsListAdapter(pics as ArrayList<Pics>)
             linearLayoutManager = LinearLayoutManager(context)
             recycler_view.layoutManager = linearLayoutManager

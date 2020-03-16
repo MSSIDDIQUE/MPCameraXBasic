@@ -5,7 +5,8 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.isVisible
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import com.android.example.cameraxbasic.R
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.fragment_image_details.*
@@ -23,9 +24,11 @@ class ImageDetailsFragment : Fragment() {
         arguments?.let {
             val safeArgs = ImageDetailsFragmentArgs.fromBundle(it)
             val pic = safeArgs.image
-            progressBar.isVisible = true
             Picasso.get().load(pic.imageUrl).fit().centerCrop().into(imageView)
-            progressBar.isVisible = false
+            progressBar.visibility = View.GONE
+        }
+        back_button.setOnClickListener {
+            it.findNavController().navigate(R.id.action_image_details_fragment_to_list_view_fragment)
         }
     }
 }

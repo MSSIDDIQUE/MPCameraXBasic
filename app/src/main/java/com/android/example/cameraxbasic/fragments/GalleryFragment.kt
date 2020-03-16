@@ -109,7 +109,6 @@ class GalleryFragment internal constructor() : Fragment() {
                 //Toast.makeText(context, "The uri is " + uri.toString(), Toast.LENGTH_LONG).show()
                 progress_bar.visibility = View.VISIBLE
                 uploadImage(uri);
-                progress_bar.visibility = View.GONE
             }
         }
 
@@ -203,9 +202,11 @@ class GalleryFragment internal constructor() : Fragment() {
                  addUploadRecordToDb(downloadUri.toString(),filename)
              } else {
                  Toast.makeText(context,"Unable to save the image to firebase storage",Toast.LENGTH_LONG).show()
+                 progress_bar.visibility = View.GONE
              }
          }?.addOnFailureListener {
              Toast.makeText(context,"Something went wrong please try again later",Toast.LENGTH_LONG).show()
+             progress_bar.visibility = View.GONE
          }
      }
 
@@ -220,9 +221,11 @@ class GalleryFragment internal constructor() : Fragment() {
                 .add(data)
                 .addOnSuccessListener { documentReference ->
                     Toast.makeText(context, "Saved to DB", Toast.LENGTH_LONG).show()
+                    progress_bar.visibility = View.GONE
                 }
                 .addOnFailureListener { e ->
                     Toast.makeText(context, "Error saving to DB", Toast.LENGTH_LONG).show()
+                    progress_bar.visibility = View.GONE
                 }
     }
 }
